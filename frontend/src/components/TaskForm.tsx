@@ -9,7 +9,7 @@ interface TaskFormProps {
 }
 
 const inputClasses =
-  'w-full px-3 py-2.5 text-sm bg-transparent border border-neutral-200 dark:border-neutral-800 text-neutral-900 dark:text-neutral-100 placeholder-neutral-400 dark:placeholder-neutral-600 focus:outline-none focus:border-primary dark:focus:border-accent transition-colors';
+  'w-full px-3 py-2.5 text-sm bg-transparent border border-neutral-200 dark:border-neutral-800 rounded-lg text-neutral-900 dark:text-neutral-100 placeholder-neutral-400 dark:placeholder-neutral-600 focus:outline-none focus:border-primary dark:focus:border-accent transition-colors';
 
 const labelClasses =
   'block text-xs font-semibold uppercase tracking-wider text-neutral-500 dark:text-neutral-400 mb-2';
@@ -61,14 +61,14 @@ const TaskForm: React.FC<TaskFormProps> = ({ onSubmit, initialData, onCancel, is
   return (
     <form
       onSubmit={handleSubmit}
-      className="border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 p-6 mb-8"
+      className="border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 rounded-xl p-6 mb-8"
     >
       <h3 className="text-base font-semibold text-neutral-900 dark:text-neutral-100 mb-5">
         {isEdit ? 'Edit Task' : 'New Task'}
       </h3>
 
       {error && (
-        <div className="border border-accent/30 bg-accent/5 text-accent text-sm p-3 mb-5">
+        <div className="border border-accent/30 bg-accent/5 text-accent text-sm p-3 rounded-lg mb-5">
           {error}
         </div>
       )}
@@ -127,7 +127,7 @@ const TaskForm: React.FC<TaskFormProps> = ({ onSubmit, initialData, onCancel, is
         <button
           type="submit"
           disabled={loading}
-          className="bg-primary dark:bg-accent text-white text-sm font-medium px-5 py-2.5 hover:opacity-90 transition-opacity disabled:opacity-40"
+          className="bg-primary dark:bg-accent text-white text-sm font-medium px-5 py-2.5 rounded-md hover:opacity-90 transition-opacity disabled:opacity-40"
         >
           {loading ? 'Saving...' : isEdit ? 'Update Task' : 'Create Task'}
         </button>
@@ -135,7 +135,7 @@ const TaskForm: React.FC<TaskFormProps> = ({ onSubmit, initialData, onCancel, is
           <button
             type="button"
             onClick={onCancel}
-            className="text-sm font-medium px-5 py-2.5 border border-neutral-200 dark:border-neutral-700 text-neutral-600 dark:text-neutral-400 hover:border-neutral-400 dark:hover:border-neutral-500 transition-colors"
+            className="text-sm font-medium px-5 py-2.5 rounded-md border border-neutral-200 dark:border-neutral-700 text-neutral-600 dark:text-neutral-400 hover:border-neutral-400 dark:hover:border-neutral-500 transition-colors"
           >
             Cancel
           </button>

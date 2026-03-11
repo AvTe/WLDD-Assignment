@@ -2,14 +2,7 @@
 @tailwind components;
 @tailwind utilities;
 
-@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&display=swap');
-
 @layer base {
-  * {
-    border-radius: 0 !important;
-    box-shadow: none !important;
-  }
-
   html {
     font-family: 'DM Sans', system-ui, sans-serif;
   }
