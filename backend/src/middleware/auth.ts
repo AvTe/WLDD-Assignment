@@ -39,12 +39,12 @@ const auth = async (
     req.user = user;
     next();
   } catch (error) {
-    if (error instanceof jwt.JsonWebTokenError) {
-      res.status(401).json({ message: 'Invalid token.' });
-      return;
-    }
     if (error instanceof jwt.TokenExpiredError) {
       res.status(401).json({ message: 'Token expired.' });
+      return;
+    }
+    if (error instanceof jwt.JsonWebTokenError) {
+      res.status(401).json({ message: 'Invalid token.' });
       return;
     }
     res.status(500).json({ message: 'Internal server error.' });
