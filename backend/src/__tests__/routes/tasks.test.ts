@@ -339,4 +339,105 @@ describe('Task Routes', () => {
       expect(res.body.source).toBe('database');
     });
   });
+
+  describe('GET /api/tasks - Additional Filters', () => {
+    beforeEach(async () => {
+      await request(app)
+        .post('/api/tasks')
+        .set('Authorization', `Bearer ${authToken}`)
+        .send({ title: 'Old Task', dueDate: '2024-01-15', status: 'pending' });
+
+      await request(app)
+        .post('/api/tasks')
+        .set('Authorization', `Bearer ${authToken}`)
+        .send({ title: 'Future Task', dueDate: '2028-06-01', status: 'completed' });
+    });
+
+    it('should filter tasks by dueDate', async () => {
+      const res = await request(app)
+        .get('/api/tasks?dueDate=2025-01-01')
+        .set('Authorization', `Bearer ${authToken}`);
+
+      expect(res.status).toBe(200);
+      expect(res.body.tasks.length).toBe(1);
+      expect(res.body.tasks[0].title).toBe('Old Task');
+    });
+
+    it('should filter by both status and dueDate', async () => {
+      const res = await request(app)
+        .get('/api/tasks?status=pending&dueDate=2025-01-01')
+        .set('Authorization', `Bearer ${authToken}`);
+
+      expect(res.status).toBe(200);
+      expect(res.body.tasks.length).toBe(1);
+    });
+
+    it('should return 400 for invalid status filter', async () => {
+      const res = await request(app)
+        .get('/api/tasks?status=invalid')
+        .set('Authorization', `Bearer ${authToken}`);
+
+      expect(res.status).toBe(400);
+    });
+
+    it('should return 400 for invalid dueDate filter', async () => {
+      const res = await request(app)
+        .get('/api/tasks?dueDate=not-a-date')
+        .set('Authorization', `Bearer ${authToken}`);
+
+      expect(res.status).toBe(400);
+    });
+
+    it('should cache filtered results separately', async () => {
+      // First request with status filter
+      const res1 = await request(app)
+        .get('/api/tasks?status=pending')
+        .set('Authorization', `Bearer ${authToken}`);
+      expect(res1.body.source).toBe('database');
+
+      // Second request with same filter - should be cached
+      const res2 = await request(app)
+        .get('/api/tasks?status=pending')
+        .set('Authorization', `Bearer ${authToken}`);
+      expect(res2.body.source).toBe('cache');
+
+      // Different filter should NOT be cached
+      const res3 = await request(app)
+        .get('/api/tasks?status=completed')
+        .set('Authorization', `Bearer ${authToken}`);
+      expect(res3.body.source).toBe('database');
+    });
+  });
+
+  describe('PUT /api/tasks/:id - Field Updates', () => {
+    let taskId: string;
+
+    beforeEach(async () => {
+      const res = await request(app)
+        .post('/api/tasks')
+        .set('Authorization', `Bearer ${authToken}`)
+        .send({ title: 'Original', description: 'desc', dueDate: '2027-01-01' });
+      taskId = res.body.task._id;
+    });
+
+    it('should update only description', async () => {
+      const res = await request(app)
+        .put(`/api/tasks/${taskId}`)
+        .set('Authorization', `Bearer ${authToken}`)
+        .send({ description: 'updated desc' });
+
+      expect(res.status).toBe(200);
+      expect(res.body.task.description).toBe('updated desc');
+      expect(res.body.task.title).toBe('Original');
+    });
+
+    it('should update only dueDate', async () => {
+      const res = await request(app)
+        .put(`/api/tasks/${taskId}`)
+        .set('Authorization', `Bearer ${authToken}`)
+        .send({ dueDate: '2028-06-15' });
+
+      expect(res.status).toBe(200);
+    });
+  });
 });
