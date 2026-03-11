@@ -25,17 +25,45 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const savedToken = localStorage.getItem('token');
-    const savedUser = localStorage.getItem('user');
-    if (savedToken && savedUser) {
+    const initAuth = async () => {
+      const savedToken = localStorage.getItem('token');
+      const savedUser = localStorage.getItem('user');
+      if (!savedToken || !savedUser) {
+        setLoading(false);
+        return;
+      }
+
+      // Restore state immediately for fast UI
       setToken(savedToken);
       try {
         setUser(JSON.parse(savedUser));
       } catch {
         localStorage.removeItem('user');
       }
-    }
-    setLoading(false);
+
+      // Skip server validation for demo tokens
+      if (savedToken === 'demo-token') {
+        setLoading(false);
+        return;
+      }
+
+      // Validate token against server
+      try {
+        const res = await authAPI.me();
+        const validatedUser = res.data.user;
+        setUser(validatedUser);
+        localStorage.setItem('user', JSON.stringify(validatedUser));
+      } catch {
+        // Token is invalid/expired — clear auth state
+        setToken(null);
+        setUser(null);
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+      }
+
+      setLoading(false);
+    };
+    initAuth();
   }, []);
 
   const login = async (email: string, password: string) => {
