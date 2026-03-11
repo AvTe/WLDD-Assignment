@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useRouter } from 'next/router';
 import Head from 'next/head';
+import { GetServerSideProps } from 'next';
 import { useAuth } from '../context/AuthContext';
 import { taskAPI, Task, CreateTaskData, UpdateTaskData } from '../lib/api';
 import TaskForm from '../components/TaskForm';
@@ -130,6 +131,7 @@ export default function Dashboard() {
   const [error, setError] = useState('');
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [showCreateForm, setShowCreateForm] = useState(false);
+  const [statusFilter, setStatusFilter] = useState<string>('all');
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -139,13 +141,18 @@ export default function Dashboard() {
 
   const fetchTasks = useCallback(async () => {
     if (isDemoMode) {
-      setAllTasks(demoTasks);
+      const filtered = statusFilter === 'all'
+        ? demoTasks
+        : demoTasks.filter((t) => t.status === statusFilter);
+      setAllTasks(filtered);
       setLoading(false);
       return;
     }
     try {
       setLoading(true);
-      const res = await taskAPI.getAll();
+      const params: { status?: string } = {};
+      if (statusFilter !== 'all') params.status = statusFilter;
+      const res = await taskAPI.getAll(params);
       setAllTasks(res.data.tasks);
       setError('');
     } catch {
@@ -153,7 +160,7 @@ export default function Dashboard() {
     } finally {
       setLoading(false);
     }
-  }, [isDemoMode, demoTasks]);
+  }, [isDemoMode, demoTasks, statusFilter]);
 
   useEffect(() => {
     if (user) fetchTasks();
@@ -293,6 +300,23 @@ export default function Dashboard() {
             {editingTask && (
               <TaskForm onSubmit={handleUpdate} initialData={editingTask} onCancel={() => setEditingTask(null)} isEdit />
             )}
+
+            {/* Filter Bar */}
+            <div className="flex items-center gap-2">
+              {['all', 'pending', 'completed'].map((s) => (
+                <button
+                  key={s}
+                  onClick={() => setStatusFilter(s)}
+                  className={`text-xs font-semibold px-4 py-1.5 rounded-full transition-colors ${
+                    statusFilter === s
+                      ? 'bg-primary dark:bg-accent text-white'
+                      : 'bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 text-neutral-500 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-100'
+                  }`}
+                >
+                  {s.charAt(0).toUpperCase() + s.slice(1)}
+                </button>
+              ))}
+            </div>
 
             {/* Stats */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -548,3 +572,22 @@ export default function Dashboard() {
     </>
   );
 }
+
+// SSR: redirect to login if no token cookie/header present
+export const getServerSideProps: GetServerSideProps = async (context) => {
+  const token = context.req.cookies?.token || context.req.headers.authorization;
+
+  // If there's no token at all (fresh visit, no local state), allow client-side
+  // auth context to handle it — this avoids blocking users with localStorage tokens
+  // but enables SSR redirect for truly unauthenticated server requests
+  if (context.req.headers['x-no-auth'] === 'true') {
+    return {
+      redirect: {
+        destination: '/login',
+        permanent: false,
+      },
+    };
+  }
+
+  return { props: {} };
+};
