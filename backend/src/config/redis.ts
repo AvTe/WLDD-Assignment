@@ -8,6 +8,8 @@ export const getRedisClient = (): Redis => {
     redisClient = new Redis({
       host: config.redis.host,
       port: config.redis.port,
+      username: config.redis.username || undefined,
+      password: config.redis.password || undefined,
       maxRetriesPerRequest: 3,
       retryStrategy(times: number) {
         if (times > 3) {
