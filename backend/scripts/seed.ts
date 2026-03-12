@@ -2,7 +2,7 @@ import mongoose from 'mongoose';
 import User from '../src/models/User';
 import Task from '../src/models/Task';
 
-const uri = process.env.MONGODB_URI || 'mongodb+srv://amitwebsitedev:HKARbUeobBFkgf0I@cluster0.ajfae.mongodb.net/task-tracker?retryWrites=true&w=majority&appName=Cluster0';
+const uri = process.env.MONGODB_URI || 'mongodb://localhost:27017/task-tracker';
 
 async function setup() {
   await mongoose.connect(uri);

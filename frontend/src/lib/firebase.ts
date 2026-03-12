@@ -2,13 +2,13 @@ import { initializeApp, getApps } from 'firebase/app';
 import { getAuth, GoogleAuthProvider } from 'firebase/auth';
 
 const firebaseConfig = {
-  apiKey: "AIzaSyBGY_sci4sRWPjjFjdFZWWgzI7qjDobdGk",
-  authDomain: "tasktracker-67b04.firebaseapp.com",
-  projectId: "tasktracker-67b04",
-  storageBucket: "tasktracker-67b04.firebasestorage.app",
-  messagingSenderId: "538140474290",
-  appId: "1:538140474290:web:0f564bcb26f57a017002ab",
-  measurementId: "G-3B2ET0T8FS",
+  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
+  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
+  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
+  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
+  measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID,
 };
 
 const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
