@@ -2,7 +2,7 @@ import admin from 'firebase-admin';
 
 if (!admin.apps.length) {
   admin.initializeApp({
-    projectId: 'tasktracker-67b04',
+    projectId: process.env.FIREBASE_PROJECT_ID || 'tasktracker-67b04',
   });
 }
 

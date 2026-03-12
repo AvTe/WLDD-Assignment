@@ -293,12 +293,15 @@ router.post(
       user.resetPasswordExpires = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
       await user.save();
 
-      // In production, send email with reset link. For now, return the token directly.
-      res.status(200).json({
+      // In production, send email with reset link
+      const response: Record<string, string> = {
         message: 'If an account exists, a reset link has been generated.',
-        // DEV ONLY: return token for testing
-        resetToken,
-      });
+      };
+      // Only expose reset token in development for testing
+      if (process.env.NODE_ENV !== 'production') {
+        response.resetToken = resetToken;
+      }
+      res.status(200).json(response);
     } catch (error) {
       console.error('Forgot password error:', error);
       res.status(500).json({ message: 'Internal server error' });

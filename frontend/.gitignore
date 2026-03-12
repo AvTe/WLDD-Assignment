@@ -4,3 +4,4 @@ out/
 coverage/
 .env.local
 *.log
+.vercel

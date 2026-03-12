@@ -134,6 +134,7 @@ export default function Dashboard() {
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [viewingTask, setViewingTask] = useState<Task | null>(null);
   const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [dueDateFilter, setDueDateFilter] = useState<string>('');
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -143,17 +144,23 @@ export default function Dashboard() {
 
   const fetchTasks = useCallback(async () => {
     if (isDemoMode) {
-      const filtered = statusFilter === 'all'
+      let filtered = statusFilter === 'all'
         ? demoTasks
         : demoTasks.filter((t) => t.status === statusFilter);
+      if (dueDateFilter) {
+        const cutoff = new Date(dueDateFilter);
+        cutoff.setHours(23, 59, 59, 999);
+        filtered = filtered.filter((t) => new Date(t.dueDate) <= cutoff);
+      }
       setAllTasks(filtered);
       setLoading(false);
       return;
     }
     try {
       setLoading(true);
-      const params: { status?: string } = {};
+      const params: { status?: string; dueDate?: string } = {};
       if (statusFilter !== 'all') params.status = statusFilter;
+      if (dueDateFilter) params.dueDate = dueDateFilter;
       const res = await taskAPI.getAll(params);
       setAllTasks(res.data.tasks);
       setError('');
@@ -162,7 +169,7 @@ export default function Dashboard() {
     } finally {
       setLoading(false);
     }
-  }, [isDemoMode, demoTasks, statusFilter]);
+  }, [isDemoMode, demoTasks, statusFilter, dueDateFilter]);
 
   useEffect(() => {
     if (user) fetchTasks();
@@ -310,7 +317,7 @@ export default function Dashboard() {
             />
 
             {/* Filter Bar */}
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
               {['all', 'pending', 'completed'].map((s) => (
                 <button
                   key={s}
@@ -324,6 +331,26 @@ export default function Dashboard() {
                   {s.charAt(0).toUpperCase() + s.slice(1)}
                 </button>
               ))}
+
+              {/* Due Date Filter */}
+              <div className="flex items-center gap-1.5 ml-2">
+                <label className="text-xs text-neutral-400 dark:text-neutral-500">Due by:</label>
+                <input
+                  type="date"
+                  value={dueDateFilter}
+                  onChange={(e) => setDueDateFilter(e.target.value)}
+                  className="text-xs px-3 py-1.5 rounded-full border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 text-neutral-700 dark:text-neutral-300 focus:outline-none focus:ring-1 focus:ring-primary dark:focus:ring-accent"
+                />
+                {dueDateFilter && (
+                  <button
+                    onClick={() => setDueDateFilter('')}
+                    className="text-xs text-neutral-400 hover:text-red-500 transition-colors p-1"
+                    title="Clear date filter"
+                  >
+                    ✕
+                  </button>
+                )}
+              </div>
             </div>
 
             {/* Stats — Dashboard overview only */}
