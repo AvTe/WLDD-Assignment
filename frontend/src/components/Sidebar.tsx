@@ -94,8 +94,10 @@ const Sidebar: React.FC<SidebarProps> = ({ pendingCount, completedCount }) => {
       <nav className="flex-1 px-3 py-4 space-y-1">
         {navItems.map((item) => {
           const isActive = item.href === '/dashboard'
-            ? router.pathname === '/dashboard'
-            : router.pathname === item.href;
+            ? router.pathname === '/dashboard' && !router.query.view
+            : item.href === '/dashboard?view=tasks'
+              ? router.pathname === '/dashboard' && router.query.view === 'tasks'
+              : router.pathname === item.href;
           return (
             <Link
               key={item.label}

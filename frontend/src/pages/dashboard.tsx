@@ -4,7 +4,8 @@ import Head from 'next/head';
 import { GetServerSideProps } from 'next';
 import { useAuth } from '../context/AuthContext';
 import { taskAPI, Task, CreateTaskData, UpdateTaskData } from '../lib/api';
-import TaskForm from '../components/TaskForm';
+import AddTaskModal from '../components/AddTaskModal';
+import TaskDetailModal from '../components/TaskDetailModal';
 import Sidebar from '../components/Sidebar';
 
 const INITIAL_DEMO_TASKS: Task[] = [
@@ -131,6 +132,7 @@ export default function Dashboard() {
   const [error, setError] = useState('');
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [showCreateForm, setShowCreateForm] = useState(false);
+  const [viewingTask, setViewingTask] = useState<Task | null>(null);
   const [statusFilter, setStatusFilter] = useState<string>('all');
 
   useEffect(() => {
@@ -235,12 +237,13 @@ export default function Dashboard() {
 
   if (authLoading || !user) return null;
 
+  const isTasksView = router.query.view === 'tasks';
   const today = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
   const greeting = new Date().getHours() < 12 ? 'Good morning' : new Date().getHours() < 17 ? 'Good afternoon' : 'Good evening';
 
   return (
     <>
-      <Head><title>Dashboard — TaskTracker</title></Head>
+      <Head><title>{isTasksView ? 'My Tasks' : 'Dashboard'} — TaskTracker</title></Head>
 
       <div className="flex min-h-screen bg-neutral-50 dark:bg-neutral-950">
         {/* Sidebar */}
@@ -254,25 +257,15 @@ export default function Dashboard() {
               <div>
                 <p className="text-xs text-neutral-400 dark:text-neutral-600">{today}</p>
                 <h1 className="text-xl font-bold text-neutral-900 dark:text-neutral-100 mt-0.5">
-                  {greeting}, {user.name?.split(' ')[0]}
+                  {isTasksView ? 'My Tasks' : `${greeting}, ${user.name?.split(' ')[0]}`}
                 </h1>
               </div>
               <button
-                onClick={() => { setShowCreateForm(!showCreateForm); setEditingTask(null); }}
-                className={`text-sm font-medium px-5 py-2.5 rounded-lg transition-colors flex items-center gap-2 ${
-                  showCreateForm
-                    ? 'border border-neutral-200 dark:border-neutral-800 text-neutral-600 dark:text-neutral-400'
-                    : 'bg-primary dark:bg-accent text-white hover:opacity-90'
-                }`}
+                onClick={() => { setShowCreateForm(true); setEditingTask(null); }}
+                className="text-sm font-medium px-5 py-2.5 rounded-lg transition-colors flex items-center gap-2 bg-primary dark:bg-accent text-white hover:opacity-90"
               >
-                {showCreateForm ? (
-                  'Cancel'
-                ) : (
-                  <>
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" /></svg>
-                    Add New
-                  </>
-                )}
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" /></svg>
+                Add New
               </button>
             </div>
           </div>
@@ -293,13 +286,28 @@ export default function Dashboard() {
               </div>
             )}
 
-            {/* Create Form */}
-            {showCreateForm && (
-              <TaskForm onSubmit={handleCreate} onCancel={() => setShowCreateForm(false)} />
-            )}
-            {editingTask && (
-              <TaskForm onSubmit={handleUpdate} initialData={editingTask} onCancel={() => setEditingTask(null)} isEdit />
-            )}
+            {/* Add / Edit Task Modal */}
+            <AddTaskModal
+              open={showCreateForm && !editingTask}
+              onClose={() => setShowCreateForm(false)}
+              onSubmit={handleCreate}
+            />
+            <AddTaskModal
+              open={!!editingTask}
+              onClose={() => setEditingTask(null)}
+              onSubmit={handleUpdate}
+              initialData={editingTask}
+              isEdit
+            />
+
+            {/* Task Detail Modal */}
+            <TaskDetailModal
+              task={viewingTask}
+              onClose={() => setViewingTask(null)}
+              onEdit={(t) => { setViewingTask(null); setEditingTask(t); }}
+              onDelete={(id) => { setViewingTask(null); handleDelete(id); }}
+              onToggleStatus={(t) => { handleToggleStatus(t); setViewingTask(null); }}
+            />
 
             {/* Filter Bar */}
             <div className="flex items-center gap-2">
@@ -318,7 +326,8 @@ export default function Dashboard() {
               ))}
             </div>
 
-            {/* Stats */}
+            {/* Stats — Dashboard overview only */}
+            {!isTasksView && (<>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               <StatCard
                 label="Total Tasks"
@@ -354,11 +363,12 @@ export default function Dashboard() {
               </div>
               <ProgressBar value={completedTasks.length} max={allTasks.length} />
             </div>
+            </>)}
 
             {/* Two column layout: Tasks + Activity */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className={`grid grid-cols-1 ${isTasksView ? '' : 'lg:grid-cols-3'} gap-6`}>
               {/* Left: Pending Tasks Table */}
-              <div className="lg:col-span-2 space-y-6">
+              <div className={`${isTasksView ? '' : 'lg:col-span-2'} space-y-6`}>
                 {/* Pending Tasks */}
                 <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-2xl overflow-hidden">
                   <div className="px-6 py-4 border-b border-neutral-100 dark:border-neutral-800 flex items-center justify-between">
@@ -388,7 +398,7 @@ export default function Dashboard() {
                       {pendingTasks.map((task) => {
                         const due = formatDueDate(task.dueDate);
                         return (
-                          <div key={task._id} className="grid grid-cols-12 items-center px-6 py-3.5 hover:bg-neutral-50 dark:hover:bg-neutral-800/30 transition-colors group">
+                          <div key={task._id} className="grid grid-cols-12 items-center px-6 py-3.5 hover:bg-neutral-50 dark:hover:bg-neutral-800/30 transition-colors group cursor-pointer" onClick={() => setViewingTask(task)}>
                             <div className="col-span-5 min-w-0">
                               <p className="text-sm font-medium text-neutral-900 dark:text-neutral-100 truncate">{task.title}</p>
                               {task.description && (
@@ -407,21 +417,21 @@ export default function Dashboard() {
                             </div>
                             <div className="col-span-2 flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                               <button
-                                onClick={() => handleToggleStatus(task)}
+                                onClick={(e) => { e.stopPropagation(); handleToggleStatus(task); }}
                                 className="p-1.5 rounded-md hover:bg-emerald-50 dark:hover:bg-emerald-950/30 text-emerald-600 dark:text-emerald-400 transition-colors"
                                 title="Mark complete"
                               >
                                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
                               </button>
                               <button
-                                onClick={() => { setEditingTask(task); setShowCreateForm(false); }}
+                                onClick={(e) => { e.stopPropagation(); setEditingTask(task); setShowCreateForm(false); }}
                                 className="p-1.5 rounded-md hover:bg-neutral-100 dark:hover:bg-neutral-800 text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300 transition-colors"
                                 title="Edit"
                               >
                                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" /><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" /></svg>
                               </button>
                               <button
-                                onClick={() => handleDelete(task._id)}
+                                onClick={(e) => { e.stopPropagation(); handleDelete(task._id); }}
                                 className="p-1.5 rounded-md hover:bg-red-50 dark:hover:bg-red-950/30 text-neutral-400 hover:text-red-500 transition-colors"
                                 title="Delete"
                               >
@@ -453,7 +463,7 @@ export default function Dashboard() {
                   ) : (
                     <div className="divide-y divide-neutral-100 dark:divide-neutral-800">
                       {completedTasks.map((task) => (
-                        <div key={task._id} className="flex items-center justify-between px-6 py-3.5 group hover:bg-neutral-50 dark:hover:bg-neutral-800/30 transition-colors">
+                        <div key={task._id} className="flex items-center justify-between px-6 py-3.5 group hover:bg-neutral-50 dark:hover:bg-neutral-800/30 transition-colors cursor-pointer" onClick={() => setViewingTask(task)}>
                           <div className="flex items-center gap-3 min-w-0 flex-1">
                             <div className="w-5 h-5 rounded-full bg-emerald-100 dark:bg-emerald-950 flex items-center justify-center shrink-0">
                               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="text-emerald-600 dark:text-emerald-400"><polyline points="20 6 9 17 4 12" /></svg>
@@ -462,13 +472,13 @@ export default function Dashboard() {
                           </div>
                           <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
                             <button
-                              onClick={() => handleToggleStatus(task)}
+                              onClick={(e) => { e.stopPropagation(); handleToggleStatus(task); }}
                               className="text-[11px] font-medium text-amber-600 dark:text-amber-400 hover:underline px-2 py-1"
                             >
                               Undo
                             </button>
                             <button
-                              onClick={() => handleDelete(task._id)}
+                              onClick={(e) => { e.stopPropagation(); handleDelete(task._id); }}
                               className="p-1.5 rounded-md hover:bg-red-50 dark:hover:bg-red-950/30 text-neutral-400 hover:text-red-500 transition-colors"
                             >
                               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6" /><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" /></svg>
@@ -481,7 +491,8 @@ export default function Dashboard() {
                 </div>
               </div>
 
-              {/* Right: Activity + Quick Stats */}
+              {/* Right: Activity + Quick Stats — Dashboard overview only */}
+              {!isTasksView && (
               <div className="space-y-6">
                 {/* Recent Activity */}
                 <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-2xl overflow-hidden">
@@ -565,6 +576,7 @@ export default function Dashboard() {
                   </div>
                 </div>
               </div>
+              )}
             </div>
           </div>
         </main>
