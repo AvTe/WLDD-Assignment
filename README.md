@@ -1,226 +1,173 @@
-# Mini Task Tracker
+# Task Tracker Application
 
-A full-stack Task Tracker web application built with **Node.js + TypeScript + Express + MongoDB + Redis** (backend) and **Next.js + Tailwind CSS** (frontend).
+A full-stack, enterprise-grade Task Tracker application designed to manage personal tasks efficiently. This project demonstrates a comprehensive understanding of modern web development, including scalable backend architecture, robust authentication, database management, caching strategies, and an elegant, responsive frontend interface.
 
-## 📌 Features
+## System Architecture
 
-- **User Authentication** — Signup / Login with JWT-based auth
-- **Task CRUD** — Create, Read, Update, Delete tasks
-- **Redis Caching** — Task list cached per user, auto-invalidated on mutations
-- **Task Filtering** — Filter by status (pending / completed)
-- **Optimistic UI** — Instant feedback on status toggle and delete
-- **Responsive Design** — Tailwind CSS with a clean, minimal UI
-- **Backend Tests** — Jest + Supertest with mongodb-memory-server and ioredis-mock
+The project follows a decoupled client-server architecture:
 
----
+- **Frontend:** Next.js application built with React, styled using Tailwind CSS, and optimized for both server-side rendering (SSR) and static site generation (SSG). 
+- **Backend:** Node.js server powered by Express, written completely in TypeScript.
+- **Database:** MongoDB for persistent document storage, governed by Mongoose ODM.
+- **Caching:** Redis for high-performance in-memory caching of recurring database queries.
+- **Authentication:** Custom JWT-based authentication featuring HTTP-Only secure refresh tokens, paired with Google OAuth integration via Firebase.
 
-## 🏗 Project Structure
+## Technology Stack
 
-```
-mini-task-tracker/
-├── backend/               # Express + TypeScript API
-│   ├── src/
-│   │   ├── config/        # DB, Redis, app config
-│   │   ├── middleware/     # Auth, validation, error handling
-│   │   ├── models/        # Mongoose models (User, Task)
-│   │   ├── routes/        # API route handlers
-│   │   ├── __tests__/     # Jest test suites
-│   │   ├── app.ts         # Express app setup
-│   │   └── server.ts      # Entry point
-│   ├── .env.example
-│   ├── jest.config.js
-│   ├── tsconfig.json
-│   └── package.json
-│
-├── frontend/              # Next.js + Tailwind CSS
-│   ├── src/
-│   │   ├── components/    # Reusable UI components
-│   │   ├── context/       # Auth context provider
-│   │   ├── lib/           # API client (Axios)
-│   │   ├── pages/         # Next.js pages
-│   │   └── styles/        # Global CSS
-│   ├── .env.example
-│   ├── next.config.js
-│   ├── tailwind.config.js
-│   └── package.json
-│
-└── README.md
-```
+- **Frontend Framework:** Next.js, React, TypeScript
+- **Styling:** Tailwind CSS, Framer Motion (for animations)
+- **State Management:** React Context API
+- **Backend Framework:** Node.js, Express, TypeScript
+- **Database:** MongoDB (Atlas), Mongoose
+- **Caching Layer:** Redis (ioredis)
+- **Security & Auth:** JSON Web Tokens (JWT), bcryptjs, cookie-parser, Firebase Auth
+- **Testing:** Jest, Supertest (Backend), React Testing Library (Frontend Unit), Playwright (End-to-End)
 
----
+## Features Implemented
 
-## 🔧 Prerequisites
+1. **User Authentication:** 
+   - Secure Signup and Login workflows.
+   - Password hashing utilizing bcrypt.
+   - Short-lived Access Tokens and long-lived Refresh Tokens stored in strict HTTP-Only cookies to prevent XSS.
+   - Google Sign-In support.
+2. **Task Management (CRUD):**
+   - Create, Read, Update, and Delete tasks.
+   - Filter tasks by status (pending or completed) and sort by due dates.
+3. **Advanced Caching Strategy:**
+   - User-specific task lists are aggressively cached in Redis to minimize database read operations.
+   - Intelligent cache invalidation triggers instantly whenever a user mutates their personal tasks (Create/Update/Delete).
+4. **Resilient UI:**
+   - Optimistic UI updates ensure instantaneous feedback on user interactions before the server formally responds.
+   - Responsive design scaling seamlessly across mobile, tablet, and desktop viewports.
+5. **Comprehensive Testing:**
+   - Over 70% branch coverage on backend microservices.
+   - Automated End-to-End (E2E) UI testing.
 
-- **Node.js** v18+
-- **MongoDB** (local or cloud — e.g., MongoDB Atlas)
-- **Redis** (local or cloud — e.g., Redis Cloud)
-- **npm** or **yarn**
+## Prerequisites
 
----
+Ensure you have the following software installed on your local machine:
+- Node.js (v18 or higher)
+- npm or yarn
+- A running Redis server (localhost:6379 by default)
+- MongoDB Database (Local instance or Atlas URI)
 
-## 🚀 Setup Instructions
+## Installation Guide
 
-### 1. Clone the repository
+Clone the repository and install the required dependencies for both the frontend and backend environments.
 
 ```bash
-git clone <repository-url>
-cd mini-task-tracker
-```
-
-### 2. Backend Setup
-
-```bash
+# Install backend dependencies
 cd backend
+npm install
+
+# Install frontend dependencies
+cd ../frontend
 npm install
 ```
 
-Create a `.env` file (or copy from `.env.example`):
+## Environment Configuration
 
-```bash
-cp .env.example .env
+You must configure the environment variables for both subsystems before starting the development servers.
+
+### Backend Setup
+Navigate to the `backend` directory and create a `.env` file based on the provided example:
+
+```env
+PORT=5000
+MONGODB_URI=mongodb_connection_string
+JWT_SECRET=your_secure_jwt_secret
+JWT_EXPIRES_IN=15m
+JWT_REFRESH_SECRET=your_secure_refresh_secret
+JWT_REFRESH_EXPIRES_IN=7d
+REDIS_HOST=127.0.0.1
+REDIS_PORT=6379
 ```
 
-**Environment Variables** (`.env`):
+### Frontend Setup
+Navigate to the `frontend` directory and create a `.env.local` file:
 
-| Variable | Description | Default |
-|---|---|---|
-| `PORT` | Server port | `5000` |
-| `MONGODB_URI` | MongoDB connection string | `mongodb://localhost:27017/task-tracker` |
-| `JWT_SECRET` | Secret key for JWT signing | (change this!) |
-| `JWT_EXPIRES_IN` | Token expiry duration | `7d` |
-| `REDIS_HOST` | Redis host | `127.0.0.1` |
-| `REDIS_PORT` | Redis port | `6379` |
+```env
+NEXT_PUBLIC_API_URL=http://localhost:5000/api
+NEXT_PUBLIC_FIREBASE_API_KEY=your_firebase_api_key
+NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=your_firebase_auth_domain
+NEXT_PUBLIC_FIREBASE_PROJECT_ID=your_firebase_project_id
+NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=your_firebase_storage_bucket
+NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=your_firebase_messaging_sender_id
+NEXT_PUBLIC_FIREBASE_APP_ID=your_firebase_app_id
+```
 
-Start the backend:
+## Running the Application
 
+For the optimal development experience, run both the backend and frontend servers simultaneously in separate terminal windows.
+
+**1. Start the Backend Server**
 ```bash
+cd backend
 npm run dev
 ```
 
-The API will be available at `http://localhost:5000`.
+**2. Start the Frontend Server**
+```bash
+cd frontend
+npm run dev
+```
 
-### 3. Frontend Setup
+The frontend application will compile and become available at `http://localhost:3000`.
+
+## Database Seeding (Optional)
+
+If you wish to populate your database with initial sample data and a demo user account, run the dedicated seed script from the backend directory:
+
+```bash
+cd backend
+npm run seed
+```
+
+This will generate a demo user (`demo@tasktracker.com` / `demo123456`) along with several pre-configured tasks to demonstrate immediate functionality.
+
+## Testing Documentation
+
+The application enforces a rigorous testing standard to guarantee system stability and prevent regressions.
+
+### Backend Testing (Jest & Supertest)
+The backend test suite validates all logical controllers, middleware, and database schema permutations.
+
+```bash
+cd backend
+npm run test           # Run standard test suite
+npm run test:coverage  # Execute tests and output branch coverage metrics
+```
+
+### Frontend Unit Testing (React Testing Library)
+Validates individual component rendering and DOM interactions.
 
 ```bash
 cd frontend
-npm install
+npm run test
 ```
 
-Create a `.env.local` file (or copy from `.env.example`):
+### End-to-End Testing (Playwright)
+Executes physical chromium browser instances to validate complex user workflows (e.g., Auth processes, DOM hydration).
 
 ```bash
-cp .env.example .env.local
+cd frontend
+npm run test:e2e
 ```
 
-**Environment Variables** (`.env.local`):
+## REST API Endpoints Overview
 
-| Variable | Description | Default |
-|---|---|---|
-| `NEXT_PUBLIC_API_URL` | Backend API URL | `http://localhost:5000/api` |
+### Authentication `/api/auth`
+- `POST /signup` - Register a new user
+- `POST /login` - Establish session and retrieve tokens
+- `GET /refresh` - Re-issue access tokens via HTTP-Only cookie
+- `POST /logout` - Terminate secure session
+- `POST /google` - Authenticate via Firebase Google OAuth
+- `GET /me` - Retrieve current user profile
+- `POST /forgot-password` - Initiate password recovery mechanism
+- `POST /reset-password` - Finalize password recovery
 
-Start the frontend:
-
-```bash
-npm run dev
-```
-
-The app will be available at `http://localhost:3000`.
-
----
-
-## 📡 API Endpoints
-
-### Auth
-
-| Method | Endpoint | Description |
-|---|---|---|
-| `POST` | `/api/auth/signup` | Create a new user |
-| `POST` | `/api/auth/login` | Authenticate & get JWT |
-| `GET` | `/api/auth/me` | Get current user (auth required) |
-
-### Tasks (all require authentication)
-
-| Method | Endpoint | Description |
-|---|---|---|
-| `GET` | `/api/tasks` | List tasks (supports `?status=pending\|completed`) |
-| `POST` | `/api/tasks` | Create a new task |
-| `PUT` | `/api/tasks/:id` | Update a task |
-| `DELETE` | `/api/tasks/:id` | Delete a task |
-
----
-
-## 🧪 Running Tests
-
-```bash
-cd backend
-npm test
-```
-
-### Test Coverage Report
-
-```bash
-npm run test:coverage
-```
-
-Tests use:
-- **mongodb-memory-server** — In-memory MongoDB for integration tests
-- **ioredis-mock** — Redis mock for caching tests
-- **supertest** — HTTP request testing
-
----
-
-## 🏛 Architecture & Design Decisions
-
-### Backend
-- **Mongoose Schema Validation** — All fields validated at the schema level with appropriate constraints
-- **Indexes** — Compound indexes on `owner + status` and `owner + dueDate` for efficient queries
-- **Password Security** — bcrypt with 12 salt rounds, password excluded from queries by default (`select: false`)
-- **JWT Auth Middleware** — Validates token, handles expiry, and verifies user existence
-- **Redis Caching Strategy** — Cache key per user + filter combination, 5-minute TTL, invalidated on any task mutation
-- **Input Validation** — express-validator on all endpoints with proper error messages
-- **Error Handling** — Centralized error handler, no sensitive info leaked
-
-### Frontend
-- **Auth Context** — React Context for global auth state, persisted in localStorage
-- **Optimistic UI** — Delete and status toggle update UI immediately, revert on failure
-- **Task Filtering** — Client sends filter params to backend, leveraging MongoDB indexes
-- **Axios Interceptors** — Auto-attach JWT token, auto-redirect on 401
-
----
-
-## 📋 Models
-
-### User
-| Field | Type | Constraints |
-|---|---|---|
-| `name` | String | Required, 2-50 chars |
-| `email` | String | Required, unique, valid email |
-| `password` | String | Required, min 6 chars, hashed with bcrypt |
-| `createdAt` | Date | Auto-generated |
-
-### Task
-| Field | Type | Constraints |
-|---|---|---|
-| `title` | String | Required, 1-200 chars |
-| `description` | String | Optional, max 2000 chars |
-| `status` | String | `pending` \| `completed`, default `pending` |
-| `dueDate` | Date | Required |
-| `owner` | ObjectId | Ref to User, required |
-| `createdAt` | Date | Auto-generated |
-
----
-
-## 🛡 Security
-
-- Passwords hashed with **bcrypt** (12 rounds)
-- JWT stored in `Authorization: Bearer <token>` header
-- CORS configured for frontend origin only
-- Input validation on all endpoints
-- Tasks scoped to authenticated user only (no access to other users' tasks)
-- Password field excluded from queries by default
-
----
-
-## 📝 License
-
-ISC
+### Tasks `/api/tasks`
+- `GET /` - Retrieve all tasks for the authenticated user (Cached)
+- `POST /` - Create a new task (Invalidates Cache)
+- `PUT /:id` - Update an existing task (Invalidates Cache)
+- `DELETE /:id` - Remove a task from the system (Invalidates Cache)

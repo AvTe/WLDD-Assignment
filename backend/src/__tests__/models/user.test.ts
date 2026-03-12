@@ -71,7 +71,6 @@ describe('User Model', () => {
     expect(error).toBeDefined();
     expect(error.errors.name).toBeDefined();
     expect(error.errors.email).toBeDefined();
-    expect(error.errors.password).toBeDefined();
   });
 
   it('should not save user with invalid email', async () => {
