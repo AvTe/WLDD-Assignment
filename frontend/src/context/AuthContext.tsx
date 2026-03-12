@@ -17,7 +17,7 @@ interface AuthContextType {
   signup: (name: string, email: string, password: string) => Promise<void>;
   googleLogin: () => Promise<void>;
   demoLogin: () => void;
-  logout: () => void;
+  logout: () => Promise<void> | void;
   updateUser: (updated: Partial<User>) => void;
   loading: boolean;
 }
@@ -109,11 +109,19 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     localStorage.setItem('user', JSON.stringify(demoUser));
   };
 
-  const logout = () => {
-    setToken(null);
-    setUser(null);
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
+  const logout = async () => {
+    try {
+      if (token && token !== 'demo-token') {
+        await authAPI.logout();
+      }
+    } catch (e) {
+      console.error('Logout error', e);
+    } finally {
+      setToken(null);
+      setUser(null);
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+    }
   };
 
   const updateUser = (updated: Partial<User>) => {

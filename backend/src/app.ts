@@ -3,6 +3,7 @@ import cors from 'cors';
 import authRoutes from './routes/auth';
 import taskRoutes from './routes/tasks';
 import errorHandler from './middleware/errorHandler';
+import cookieParser from 'cookie-parser';
 
 const app = express();
 
@@ -12,6 +13,7 @@ app.use(cors({
   credentials: true,
 }));
 app.use(express.json());
+app.use(cookieParser());
 
 // Health check
 app.get('/api/health', (_req, res) => {

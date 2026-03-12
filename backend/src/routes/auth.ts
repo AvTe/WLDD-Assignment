@@ -1,4 +1,4 @@
-import { Router, Response } from 'express';
+import { Router, Request, Response } from 'express';
 import { body } from 'express-validator';
 import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
@@ -9,6 +9,26 @@ import auth, { AuthRequest } from '../middleware/auth';
 import firebaseAdmin from '../config/firebase';
 
 const router = Router();
+
+// Helper: Generate tokens and set refresh cookie
+const generateTokens = (res: Response, userId: string) => {
+  const token = jwt.sign({ id: userId }, config.jwtSecret, {
+    expiresIn: config.jwtExpiresIn as any,
+  });
+
+  const refreshToken = jwt.sign({ id: userId }, config.jwtRefreshSecret, {
+    expiresIn: config.jwtRefreshExpiresIn as any,
+  });
+
+  res.cookie('refreshToken', refreshToken, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'strict',
+    maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+  });
+
+  return token;
+};
 
 // POST /api/auth/signup
 router.post(
@@ -44,9 +64,7 @@ router.post(
       await user.save();
 
       // Generate JWT
-      const token = jwt.sign({ id: user._id }, config.jwtSecret, {
-        expiresIn: config.jwtExpiresIn as any,
-      });
+      const token = generateTokens(res, user._id.toString());
 
       res.status(201).json({
         message: 'User created successfully',
@@ -103,9 +121,7 @@ router.post(
       }
 
       // Generate JWT
-      const token = jwt.sign({ id: user._id }, config.jwtSecret, {
-        expiresIn: config.jwtExpiresIn as any,
-      });
+      const token = generateTokens(res, user._id.toString());
 
       res.status(200).json({
         message: 'Login successful',
@@ -142,6 +158,42 @@ router.get('/me', auth, async (req: AuthRequest, res: Response): Promise<void> =
     console.error('Get user error:', error);
     res.status(500).json({ message: 'Internal server error' });
   }
+});
+
+// GET /api/auth/refresh - Get new access token using refresh token
+router.get('/refresh', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { refreshToken } = req.cookies;
+    if (!refreshToken) {
+      res.status(401).json({ message: 'Access denied. No refresh token provided.' });
+      return;
+    }
+
+    const decoded = jwt.verify(refreshToken, config.jwtRefreshSecret) as any;
+    const user = await User.findById(decoded.id);
+
+    if (!user) {
+      res.clearCookie('refreshToken');
+      res.status(401).json({ message: 'Invalid refresh token.' });
+      return;
+    }
+
+    const token = generateTokens(res, user._id.toString());
+    res.status(200).json({ token });
+  } catch (error) {
+    res.clearCookie('refreshToken');
+    res.status(401).json({ message: 'Invalid or expired refresh token.' });
+  }
+});
+
+// POST /api/auth/logout - Clear refresh token
+router.post('/logout', (req: Request, res: Response): void => {
+  res.clearCookie('refreshToken', {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'strict',
+  });
+  res.status(200).json({ message: 'Logged out successfully' });
 });
 
 // POST /api/auth/google - Google sign-in via Firebase
@@ -187,9 +239,7 @@ router.post(
       }
 
       // Generate JWT
-      const token = jwt.sign({ id: user._id }, config.jwtSecret, {
-        expiresIn: config.jwtExpiresIn as any,
-      });
+      const token = generateTokens(res, user._id.toString());
 
       res.status(200).json({
         message: 'Google login successful',
