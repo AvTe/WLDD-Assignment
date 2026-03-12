@@ -1,10 +1,13 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { signInWithPopup } from 'firebase/auth';
 import { authAPI } from '../lib/api';
+import { firebaseAuth, googleProvider } from '../lib/firebase';
 
 interface User {
   id: string;
   name: string;
   email: string;
+  avatar?: string;
 }
 
 interface AuthContextType {
@@ -12,8 +15,10 @@ interface AuthContextType {
   token: string | null;
   login: (email: string, password: string) => Promise<void>;
   signup: (name: string, email: string, password: string) => Promise<void>;
+  googleLogin: () => Promise<void>;
   demoLogin: () => void;
   logout: () => void;
+  updateUser: (updated: Partial<User>) => void;
   loading: boolean;
 }
 
@@ -84,6 +89,17 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     localStorage.setItem('user', JSON.stringify(newUser));
   };
 
+  const googleLogin = async () => {
+    const result = await signInWithPopup(firebaseAuth, googleProvider);
+    const idToken = await result.user.getIdToken();
+    const res = await authAPI.googleLogin({ idToken });
+    const { token: newToken, user: newUser } = res.data;
+    setToken(newToken);
+    setUser(newUser);
+    localStorage.setItem('token', newToken);
+    localStorage.setItem('user', JSON.stringify(newUser));
+  };
+
   const demoLogin = () => {
     const demoUser: User = { id: 'demo-user', name: 'Demo User', email: 'demo@tasktracker.com' };
     const demoToken = 'demo-token';
@@ -100,8 +116,17 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     localStorage.removeItem('user');
   };
 
+  const updateUser = (updated: Partial<User>) => {
+    setUser((prev) => {
+      if (!prev) return prev;
+      const merged = { ...prev, ...updated };
+      localStorage.setItem('user', JSON.stringify(merged));
+      return merged;
+    });
+  };
+
   return (
-    <AuthContext.Provider value={{ user, token, login, signup, demoLogin, logout, loading }}>
+    <AuthContext.Provider value={{ user, token, login, signup, googleLogin, demoLogin, logout, updateUser, loading }}>
       {children}
     </AuthContext.Provider>
   );

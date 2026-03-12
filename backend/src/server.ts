@@ -8,8 +8,12 @@ const startServer = async (): Promise<void> => {
     // Connect to MongoDB
     await connectDB();
 
-    // Initialize Redis
-    getRedisClient();
+    // Initialize Redis (non-blocking — app works without it)
+    try {
+      getRedisClient();
+    } catch (err) {
+      console.warn('Redis not available — running without cache');
+    }
 
     // Start server
     app.listen(config.port, () => {

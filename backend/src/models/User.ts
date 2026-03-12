@@ -6,6 +6,10 @@ export interface IUser extends Document {
   name: string;
   email: string;
   password: string;
+  avatar?: string;
+  firebaseUid?: string;
+  resetPasswordToken?: string;
+  resetPasswordExpires?: Date;
   createdAt: Date;
   comparePassword(candidatePassword: string): Promise<boolean>;
 }
@@ -29,9 +33,24 @@ const userSchema = new Schema<IUser>(
     },
     password: {
       type: String,
-      required: [true, 'Password is required'],
       minlength: [6, 'Password must be at least 6 characters'],
       select: false, // Don't include password in queries by default
+    },
+    avatar: {
+      type: String,
+      default: '',
+    },
+    firebaseUid: {
+      type: String,
+      sparse: true,
+    },
+    resetPasswordToken: {
+      type: String,
+      select: false,
+    },
+    resetPasswordExpires: {
+      type: Date,
+      select: false,
     },
   },
   {

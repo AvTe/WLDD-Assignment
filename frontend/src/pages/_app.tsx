@@ -7,8 +7,8 @@ import '../styles/globals.css';
 
 export default function App({ Component, pageProps }: AppProps) {
   const router = useRouter();
-  const isAuthPage = ['/login', '/signup'].includes(router.pathname);
-  const isFullLayoutPage = ['/', '/dashboard'].includes(router.pathname);
+  const isAuthPage = ['/login', '/signup', '/forgot-password', '/reset-password'].includes(router.pathname);
+  const isFullLayoutPage = ['/', '/dashboard', '/settings'].includes(router.pathname);
 
   return (
     <ThemeProvider>

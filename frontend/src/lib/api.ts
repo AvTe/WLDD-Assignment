@@ -42,7 +42,17 @@ export const authAPI = {
     api.post('/auth/signup', data),
   login: (data: { email: string; password: string }) =>
     api.post('/auth/login', data),
+  googleLogin: (data: { idToken: string }) =>
+    api.post('/auth/google', data),
   me: () => api.get('/auth/me'),
+  forgotPassword: (data: { email: string }) =>
+    api.post('/auth/forgot-password', data),
+  resetPassword: (data: { token: string; password: string }) =>
+    api.post('/auth/reset-password', data),
+  updateSettings: (data: { name?: string }) =>
+    api.put('/auth/settings', data),
+  changePassword: (data: { currentPassword: string; newPassword: string }) =>
+    api.put('/auth/change-password', data),
 };
 
 // Task API
