@@ -52,18 +52,15 @@ router.post(
     try {
       const { name, email, password } = req.body;
 
-      // Check if user already exists
       const existingUser = await User.findOne({ email });
       if (existingUser) {
         res.status(409).json({ message: 'User already exists with this email' });
         return;
       }
 
-      // Create new user
       const user = new User({ name, email, password });
       await user.save();
 
-      // Generate JWT
       const token = generateTokens(res, user._id.toString());
 
       res.status(201).json({
@@ -106,21 +103,18 @@ router.post(
     try {
       const { email, password } = req.body;
 
-      // Find user and include password for comparison
       const user = await User.findOne({ email }).select('+password');
       if (!user) {
         res.status(401).json({ message: 'Invalid email or password' });
         return;
       }
 
-      // Compare passwords
       const isMatch = await user.comparePassword(password);
       if (!isMatch) {
         res.status(401).json({ message: 'Invalid email or password' });
         return;
       }
 
-      // Generate JWT
       const token = generateTokens(res, user._id.toString());
 
       res.status(200).json({
@@ -207,7 +201,6 @@ router.post(
     try {
       const { idToken } = req.body;
 
-      // Verify the Firebase ID token
       const decodedToken = await firebaseAdmin.auth().verifyIdToken(idToken);
       const { uid, email, name, picture } = decodedToken;
 
@@ -216,11 +209,9 @@ router.post(
         return;
       }
 
-      // Find existing user by email or firebaseUid
       let user = await User.findOne({ $or: [{ email }, { firebaseUid: uid }] });
 
       if (!user) {
-        // Create new user from Google profile
         user = new User({
           name: name || email.split('@')[0],
           email,
@@ -229,7 +220,6 @@ router.post(
         });
         await user.save();
       } else if (!user.firebaseUid) {
-        // Link Firebase to existing email user
         user.firebaseUid = uid;
         if (picture && !user.avatar) user.avatar = picture;
         await user.save();
@@ -238,7 +228,6 @@ router.post(
         await user.save();
       }
 
-      // Generate JWT
       const token = generateTokens(res, user._id.toString());
 
       res.status(200).json({
@@ -279,25 +268,21 @@ router.post(
       const { email } = req.body;
       const user = await User.findOne({ email });
 
-      // Always return success to prevent email enumeration
       if (!user) {
         res.status(200).json({ message: 'If an account exists, a reset link has been generated.' });
         return;
       }
 
-      // Generate reset token
       const resetToken = crypto.randomBytes(32).toString('hex');
       const hashedToken = crypto.createHash('sha256').update(resetToken).digest('hex');
 
       user.resetPasswordToken = hashedToken;
-      user.resetPasswordExpires = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
+      user.resetPasswordExpires = new Date(Date.now() + 60 * 60 * 1000);
       await user.save();
 
-      // In production, send email with reset link
       const response: Record<string, string> = {
         message: 'If an account exists, a reset link has been generated.',
       };
-      // Only expose reset token in development for testing
       if (process.env.NODE_ENV !== 'production') {
         response.resetToken = resetToken;
       }
@@ -405,7 +390,6 @@ router.put(
         return;
       }
 
-      // Google-only users have no password
       if (!user.password) {
         res.status(400).json({ message: 'Account uses Google sign-in. Password cannot be changed here.' });
         return;

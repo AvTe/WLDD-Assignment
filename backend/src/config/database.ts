@@ -3,11 +3,12 @@ import config from './index';
 
 const connectDB = async (): Promise<void> => {
   try {
+    if (mongoose.connection.readyState === 1) return; // already connected
     await mongoose.connect(config.mongodbUri);
     console.log('MongoDB connected successfully');
   } catch (error) {
     console.error('MongoDB connection error:', error);
-    process.exit(1);
+    throw error;
   }
 };
 

@@ -9,26 +9,28 @@ import cookieParser from 'cookie-parser';
 
 const app = express();
 
-// Security: HTTP headers
 app.use(helmet());
 
-// Middleware
 const allowedOrigins = (process.env.FRONTEND_URL || 'http://localhost:3000')
   .split(',')
   .map((o) => o.trim());
 
 app.use(cors({
-  origin: allowedOrigins,
+  origin: (origin, callback) => {
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.includes(origin)) return callback(null, true);
+    if (origin.endsWith('.vercel.app')) return callback(null, true);
+    callback(new Error('Not allowed by CORS'));
+  },
   credentials: true,
 }));
 app.use(express.json({ limit: '10kb' }));
 app.use(cookieParser());
 
-// Rate limiting on auth routes (brute-force protection) — skip in test env
 if (process.env.NODE_ENV !== 'test') {
   const authLimiter = rateLimit({
-    windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 20, // limit each IP to 20 auth requests per window
+    windowMs: 15 * 60 * 1000,
+    max: 20,
     message: { message: 'Too many requests, please try again later.' },
     standardHeaders: true,
     legacyHeaders: false,
@@ -36,16 +38,12 @@ if (process.env.NODE_ENV !== 'test') {
   app.use('/api/auth', authLimiter);
 }
 
-// Health check
 app.get('/api/health', (_req, res) => {
   res.status(200).json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
-// Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/tasks', taskRoutes);
-
-// Error handler
 app.use(errorHandler);
 
 export default app;

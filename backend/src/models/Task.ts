@@ -50,7 +50,6 @@ const taskSchema = new Schema<ITask>(
   }
 );
 
-// Indexes for efficient queries
 taskSchema.index({ owner: 1, status: 1 });
 taskSchema.index({ owner: 1, dueDate: 1 });
 taskSchema.index({ owner: 1 });

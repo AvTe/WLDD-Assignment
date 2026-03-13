@@ -38,7 +38,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         return;
       }
 
-      // Restore state immediately for fast UI
       setToken(savedToken);
       try {
         setUser(JSON.parse(savedUser));
@@ -46,20 +45,17 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         localStorage.removeItem('user');
       }
 
-      // Skip server validation for demo tokens
       if (savedToken === 'demo-token') {
         setLoading(false);
         return;
       }
 
-      // Validate token against server
       try {
         const res = await authAPI.me();
         const validatedUser = res.data.user;
         setUser(validatedUser);
         localStorage.setItem('user', JSON.stringify(validatedUser));
       } catch {
-        // Token is invalid/expired — clear auth state
         setToken(null);
         setUser(null);
         localStorage.removeItem('token');

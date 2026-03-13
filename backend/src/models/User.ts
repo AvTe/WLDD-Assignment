@@ -34,7 +34,7 @@ const userSchema = new Schema<IUser>(
     password: {
       type: String,
       minlength: [6, 'Password must be at least 6 characters'],
-      select: false, // Don't include password in queries by default
+      select: false,
     },
     avatar: {
       type: String,
@@ -58,7 +58,6 @@ const userSchema = new Schema<IUser>(
   }
 );
 
-// Hash password before saving
 userSchema.pre('save', async function (next) {
   if (!this.isModified('password')) return next();
 
@@ -67,7 +66,6 @@ userSchema.pre('save', async function (next) {
   next();
 });
 
-// Compare password method
 userSchema.methods.comparePassword = async function (
   candidatePassword: string
 ): Promise<boolean> {

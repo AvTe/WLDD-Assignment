@@ -65,8 +65,6 @@ const INITIAL_DEMO_TASKS: Task[] = [
   },
 ];
 
-/* ─── Helper Components ─── */
-
 function StatCard({ label, value, icon, color }: { label: string; value: number; icon: React.ReactNode; color: string }) {
   return (
     <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-2xl p-5 flex items-center gap-4">
@@ -118,8 +116,6 @@ function formatDueDate(dateStr: string) {
   if (diffDays === 1) return { text: 'Tomorrow', isOverdue: false };
   return { text: `${diffDays} days left`, isOverdue: false };
 }
-
-/* ─── Dashboard ─── */
 
 export default function Dashboard() {
   const { user, token, loading: authLoading } = useAuth();
@@ -175,7 +171,6 @@ export default function Dashboard() {
     if (user) fetchTasks();
   }, [user, fetchTasks]);
 
-  /* Derived data */
   const pendingTasks = useMemo(() => allTasks.filter((t) => t.status === 'pending'), [allTasks]);
   const completedTasks = useMemo(() => allTasks.filter((t) => t.status === 'completed'), [allTasks]);
   const overdueTasks = useMemo(
@@ -187,7 +182,6 @@ export default function Dashboard() {
     [allTasks]
   );
 
-  /* Handlers */
   const handleCreate = async (data: CreateTaskData | UpdateTaskData) => {
     if (isDemoMode) {
       const newTask: Task = {
@@ -253,12 +247,9 @@ export default function Dashboard() {
       <Head><title>{isTasksView ? 'My Tasks' : 'Dashboard'} — TaskTracker</title></Head>
 
       <div className="flex min-h-screen bg-neutral-50 dark:bg-neutral-950">
-        {/* Sidebar */}
         <Sidebar pendingCount={pendingTasks.length} completedCount={completedTasks.length} />
 
-        {/* Main content */}
         <main className="flex-1 ml-64 min-h-screen">
-          {/* Top bar */}
           <div className="sticky top-0 z-20 bg-neutral-50/80 dark:bg-neutral-950/80 backdrop-blur-sm border-b border-neutral-200 dark:border-neutral-800">
             <div className="px-8 py-4 flex items-center justify-between">
               <div>
@@ -278,7 +269,6 @@ export default function Dashboard() {
           </div>
 
           <div className="px-8 py-6 space-y-6">
-            {/* Demo Banner */}
             {isDemoMode && (
               <div className="border border-accent/20 bg-accent/5 text-accent text-xs px-4 py-2.5 rounded-xl flex items-center gap-2">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" /></svg>
@@ -286,14 +276,12 @@ export default function Dashboard() {
               </div>
             )}
 
-            {/* Error */}
             {error && (
               <div className="border border-accent/30 bg-accent/5 text-accent text-sm p-3 rounded-xl">
                 {error}
               </div>
             )}
 
-            {/* Add / Edit Task Modal */}
             <AddTaskModal
               open={showCreateForm && !editingTask}
               onClose={() => setShowCreateForm(false)}
@@ -307,7 +295,6 @@ export default function Dashboard() {
               isEdit
             />
 
-            {/* Task Detail Modal */}
             <TaskDetailModal
               task={viewingTask}
               onClose={() => setViewingTask(null)}

@@ -10,7 +10,6 @@ const api = axios.create({
   withCredentials: true,
 });
 
-// Add auth token to requests
 api.interceptors.request.use((config) => {
   if (typeof window !== 'undefined') {
     const token = localStorage.getItem('token');
@@ -35,7 +34,6 @@ const processQueue = (error: any, token: string | null = null) => {
   failedQueue = [];
 };
 
-// Handle 401 responses
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
@@ -44,7 +42,6 @@ api.interceptors.response.use(
     if (error.response?.status === 401 && typeof window !== 'undefined') {
       const currentToken = localStorage.getItem('token');
       
-      // Ignore refresh for demo token or if no token exists yet
       if (!currentToken || currentToken === 'demo-token') {
         if (currentToken && currentToken !== 'demo-token') {
           localStorage.removeItem('token');
@@ -70,7 +67,6 @@ api.interceptors.response.use(
         isRefreshing = true;
 
         try {
-          // Attempt to refresh token using the http-only cookie
           const { data } = await axios.get(`${API_URL}/auth/refresh`, { withCredentials: true });
           const newToken = data.token;
           
@@ -95,7 +91,6 @@ api.interceptors.response.use(
   }
 );
 
-// Auth API
 export const authAPI = {
   signup: (data: { name: string; email: string; password: string }) =>
     api.post('/auth/signup', data),
@@ -115,7 +110,6 @@ export const authAPI = {
   logout: () => api.post('/auth/logout'),
 };
 
-// Task API
 export interface Task {
   _id: string;
   title: string;
